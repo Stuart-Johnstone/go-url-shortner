@@ -1,4 +1,4 @@
-module github.com/stuart-johnstone/urlshortener
+module urlshortener
 
 go 1.26.3
 
