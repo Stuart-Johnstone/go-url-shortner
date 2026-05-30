@@ -1,0 +1,12 @@
+<html>
+<body>
+  <h1>URL Shortener</h1>
+  <form method="POST" action="/shorten">
+      <input name="url" placeholder="Enter URL" />
+      <button>Shorten</button>
+  </form>
+  {{if .ShortURL}}
+      <p>Your short URL: <a href="{{.ShortURL}}">{{.ShortURL}}</a></p>
+  {{end}}
+</body>
+</html>

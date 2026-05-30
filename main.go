@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,10 +20,14 @@ type kvPair struct {
 	original  string
 }
 
+var tmpl = template.Must(template.ParseFiles("templates/home.html"))
+
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET/{id}", handleRedirect)
+	mux.HandleFunc("GET /{id}", handleRedirect)
+	mux.HandleFunc("GET /", handleHome)
+	mux.HandleFunc("POST /shorten", handleShorten)
 	http.ListenAndServe(":8080", mux)
 
 	// var userInput string
@@ -33,6 +39,10 @@ func main() {
 	// writeToDb(userKv, client, ctx)
 	// fmt.Scanln(&userInput)
 	// readFromDb(userInput, client, ctx)
+}
+
+func handleHome(w http.ResponseWriter, r *http.Request) {
+	tmpl.Execute(w, nil)
 }
 
 func dbConnect() (*mongo.Client, context.Context) {
@@ -52,6 +62,28 @@ func dbConnect() (*mongo.Client, context.Context) {
 	return client, ctx
 }
 
+func handleShorten(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	hash := getHash(r.FormValue("url"))
+	doc := bson.M{
+		"code": hash.shortened,
+		"url":  r.FormValue("url"),
+		"hits": 0,
+	}
+	client, ctx := dbConnect()
+	collection := client.Database("testing").Collection("hashKeyPairs")
+	result, err := collection.InsertOne(ctx, doc)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tmpl.Execute(w, map[string]string{
+		"ShortURL": ("http://localhost:8080/" + hash.shortened),
+	})
+	client.Disconnect(ctx)
+	fmt.Println(result)
+}
+
 func handleRedirect(w http.ResponseWriter, r *http.Request) {
 	path := r.PathValue("id")
 
@@ -65,7 +97,12 @@ func handleRedirect(w http.ResponseWriter, r *http.Request) {
 	var result bson.M
 	collection.FindOne(ctx, doc).Decode(&result)
 
-	http.Redirect(w, r, result["url"].(string), 302)
+	url := result["url"].(string)
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		url = "https://" + url
+	}
+
+	http.Redirect(w, r, url, 302)
 
 	client.Disconnect(ctx)
 }
