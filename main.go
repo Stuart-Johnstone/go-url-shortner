@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"strings"
 
-	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"urlshortener/model"
@@ -38,7 +38,7 @@ func handleShorten(w http.ResponseWriter, r *http.Request) {
 
 	collection := client.Database("testing").Collection("hashKeyPairs")
 
-	doc := bson.M{"code": hash.shortened, "url": r.FormValue("url"), "hits": 0}
+	doc := bson.M{"code": hash.Shortened, "url": r.FormValue("url"), "hits": 0}
 
 	_, err := collection.InsertOne(ctx, doc)
 	if err != nil {
@@ -46,7 +46,7 @@ func handleShorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl.Execute(w, map[string]string{
-		"ShortURL": ("http://localhost:8080/" + hash.shortened),
+		"ShortURL": ("http://localhost:8080/" + hash.Shortened),
 	})
 	client.Disconnect(ctx)
 }
@@ -59,12 +59,14 @@ func handleRedirect(w http.ResponseWriter, r *http.Request) {
 	doc := bson.M{"code": path}
 
 	res, err := util.CheckCache(path)
-	if err == nil {
+	fmt.Println("Cache Result: " + res)
+	if err != nil {
 
 		var result bson.M
 		collection.FindOne(ctx, doc).Decode(&result)
 		res = result["url"].(string)
 
+		fmt.Println("Cache missed, writing " + res + " to cache")
 		util.WriteCache(model.KvPair{Shortened: path, Original: res})
 	}
 

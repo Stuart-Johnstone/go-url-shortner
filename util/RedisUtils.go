@@ -18,9 +18,12 @@ func CheckCache(s string) (string, error) {
 	ctx := context.Background()
 	res, err := rdb.Get(ctx, s).Result()
 
+	var original string
+	json.Unmarshal([]byte(res), &original)
+
 	rdb.Close()
 
-	return res, err
+	return original, err
 }
 
 func WriteCache(kvPair model.KvPair) {
