@@ -9,6 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"urlshortener/model"
 	"urlshortener/util"
 )
 
@@ -52,20 +53,26 @@ func handleShorten(w http.ResponseWriter, r *http.Request) {
 
 func handleRedirect(w http.ResponseWriter, r *http.Request) {
 	client, ctx := util.DbConnect()
+	collection := client.Database("testing").Collection("hashKeyPairs")
 
 	path := r.PathValue("id")
 	doc := bson.M{"code": path}
 
-	var result bson.M
-	collection := client.Database("testing").Collection("hashKeyPairs")
-	collection.FindOne(ctx, doc).Decode(&result)
+	res, err := util.CheckCache(path)
+	if err == nil {
 
-	url := result["url"].(string)
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = "https://" + url
+		var result bson.M
+		collection.FindOne(ctx, doc).Decode(&result)
+		res = result["url"].(string)
+
+		util.WriteCache(model.KvPair{Shortened: path, Original: res})
 	}
 
-	http.Redirect(w, r, url, 302)
+	if !strings.HasPrefix(res, "http://") && !strings.HasPrefix(res, "https://") {
+		res = "https://" + res
+	}
+
+	http.Redirect(w, r, res, 302)
 
 	update := bson.M{"$inc": bson.M{"hits": 1}}
 	collection.UpdateOne(ctx, doc, update)
