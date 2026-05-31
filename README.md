@@ -22,6 +22,14 @@ A simple URL shortener built with Go, MongoDB, and Redis.
 
 ## Running
 
+### Docker (recommended)
+
+```sh
+docker compose up --build
+```
+
+### Local
+
 Start the dependencies:
 
 ```sh
