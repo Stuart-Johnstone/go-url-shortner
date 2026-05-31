@@ -16,8 +16,11 @@ func CheckCache(s string) (string, error) {
 	})
 
 	ctx := context.Background()
+	res, err := rdb.Get(ctx, s).Result()
 
-	return rdb.Get(ctx, s).Result()
+	rdb.Close()
+
+	return res, err
 }
 
 func WriteCache(kvPair model.KvPair) {
@@ -30,4 +33,6 @@ func WriteCache(kvPair model.KvPair) {
 	// Write with a TTL (expiration)
 	jsonBytes, _ := json.Marshal(kvPair.Original)
 	rdb.Set(ctx, kvPair.Shortened, jsonBytes, 5*time.Minute)
+
+	rdb.Close()
 }
