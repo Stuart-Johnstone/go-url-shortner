@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -11,9 +12,7 @@ import (
 )
 
 func CheckCache(s string) (string, error) {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	})
+	rdb := getRedisClient()
 
 	ctx := context.Background()
 	res, err := rdb.Get(ctx, s).Result()
@@ -27,9 +26,7 @@ func CheckCache(s string) (string, error) {
 }
 
 func WriteCache(kvPair model.KvPair) {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	})
+	rdb := getRedisClient()
 
 	ctx := context.Background()
 
@@ -38,4 +35,15 @@ func WriteCache(kvPair model.KvPair) {
 	rdb.Set(ctx, kvPair.Shortened, jsonBytes, 5*time.Minute)
 
 	rdb.Close()
+}
+
+func getRedisClient() *redis.Client {
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+
+	return redis.NewClient(&redis.Options{
+		Addr: redisAddr,
+	})
 }
