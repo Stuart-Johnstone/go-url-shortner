@@ -4,7 +4,7 @@ A simple URL shortener built with Go, MongoDB, and Redis.
 
 ## Demo
 
-<video src="demo.mp4" controls></video>
+![Demo](demo.gif)
 
 ## How it works
 
