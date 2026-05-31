@@ -4,7 +4,8 @@
 
 There are going to be a couple of challenges. 
 
-- CR database, append only for now
+(Done)
+- Create Read database, append only for now
 - Hash collisions, im not going to use sha265 for perf reasons
 - cacheing
 - make this work over http using a redirect, will need some home page probably
@@ -14,6 +15,15 @@ There are going to be a couple of challenges.
 | Key | value |
 | x6jg3p | google.com |
 | 8blvjz | instagram.com/stuartkj |
+
+Stretch Goals
+Interview-relevant concepts
+  - Graceful shutdown (context, os.Signal)
+  - Struct tags, interfaces, dependency injection (pass a Store interface to handlers)
+  - Error handling patterns
+  - Environment config 
+  - Basic middleware (logging, rate limiting)
+  - Testing with httptest and a mock store
 
 
 ## Steps

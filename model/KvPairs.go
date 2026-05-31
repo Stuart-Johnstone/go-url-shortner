@@ -1,6 +1,6 @@
 package model
 
 type KvPair struct {
-	shortened string
-	original  string
+	Shortened string
+	Original  string
 }
